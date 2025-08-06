@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "mission_interfaces__py",
+		"source" : "/home/thamil/nidar_m1/base_ws/build/mission_interfaces/mission_interfaces__py"
+	}
+}

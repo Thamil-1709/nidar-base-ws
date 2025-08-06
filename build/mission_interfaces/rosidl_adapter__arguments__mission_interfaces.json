@@ -1,0 +1,6 @@
+{
+  "package_name": "mission_interfaces",
+  "non_idl_tuples": [
+    "/home/thamil/nidar_m1/base_ws/src/mission_interfaces:srv/GetLawnmowerPath.srv"
+  ]
+}

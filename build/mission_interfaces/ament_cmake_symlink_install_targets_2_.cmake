@@ -1,0 +1,1 @@
+ament_cmake_symlink_install_targets("TARGET_FILES" "/home/thamil/nidar_m1/base_ws/build/mission_interfaces/rosidl_generator_py/mission_interfaces/mission_interfaces_s__rosidl_typesupport_c.so" "TARGETS" "mission_interfaces_s__rosidl_typesupport_c" "DESTINATION" "lib/python3.12/site-packages/mission_interfaces")

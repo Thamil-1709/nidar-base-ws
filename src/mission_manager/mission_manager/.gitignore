@@ -1,0 +1,40 @@
+# ROS 2 build artifacts
+build/
+install/
+log/
+
+# Colcon meta
+.colcon/
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# CMake and catkin tools cache>
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+ament_cmake_environment_hooks/
+ament_index/
+
+# ROS 2 Launch log
+*.launch.log
+
+# VSCode and CLion IDE settings (optional)
+.vscode/
+.idea/
+
+# Git clone artifacts
+*.swp
+*~
+
+# Ignore workspace-specific files
+local_setup.*
+
+
+# ROS 2 overlay workspace specific
+.env
+.env.*

@@ -1,0 +1,2 @@
+[console_scripts]
+lawnmower_planner = mission_manager.scout_path_generator:main

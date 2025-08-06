@@ -1,0 +1,36 @@
+{
+  "type_description_msg": {
+    "type_description": {
+      "type_name": "mission_interfaces/srv/GetLawnmowerPath_Response",
+      "fields": [
+        {
+          "name": "waypoint_x",
+          "type": {
+            "type_id": 155,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        },
+        {
+          "name": "waypoint_y",
+          "type": {
+            "type_id": 155,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        }
+      ]
+    },
+    "referenced_type_descriptions": []
+  },
+  "type_hashes": [
+    {
+      "type_name": "mission_interfaces/srv/GetLawnmowerPath_Response",
+      "hash_string": "RIHS01_99e329132f10d8a362b38f7a821414fc20f494cadce25115b6b1018b9f01c6d0"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from mission_interfaces/srv/GetLawnmowerPath.srv
+// generated code does not contain a copyright notice
+
+
+module mission_interfaces {
+  module srv {
+    @verbatim (language="comment", text=
+      "Request")
+    struct GetLawnmowerPath_Request {
+      sequence<double> polygon_x;
+
+      sequence<double> polygon_y;
+
+      double safe_margin;
+
+      double spacing;
+
+      double angle;
+    };
+    @verbatim (language="comment", text=
+      "Response")
+    struct GetLawnmowerPath_Response {
+      sequence<double> waypoint_x;
+
+      sequence<double> waypoint_y;
+    };
+  };
+};

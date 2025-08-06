@@ -1,0 +1,15 @@
+running develop
+running egg_info
+writing mission_manager.egg-info/PKG-INFO
+writing dependency_links to mission_manager.egg-info/dependency_links.txt
+writing entry points to mission_manager.egg-info/entry_points.txt
+writing requirements to mission_manager.egg-info/requires.txt
+writing top-level names to mission_manager.egg-info/top_level.txt
+reading manifest file 'mission_manager.egg-info/SOURCES.txt'
+writing manifest file 'mission_manager.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/thamil/nidar_m1/base_ws/install/mission_manager/lib/python3.12/site-packages/mission-manager.egg-link (link to .)
+Installing lawnmower_planner script to /home/thamil/nidar_m1/base_ws/install/mission_manager/lib/mission_manager
+
+Installed /home/thamil/nidar_m1/base_ws/build/mission_manager
+running symlink_data

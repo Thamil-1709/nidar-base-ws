@@ -1,0 +1,24 @@
+[0.955s] Invoking command in '/home/thamil/nidar_m1/base_ws/build/mission_manager': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/thamil/nidar_m1/base_ws/build/mission_manager/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/thamil/nidar_m1/base_ws/install/mission_manager/lib/python3.12/site-packages:/home/thamil/nidar_m1/base_ws/install/mission_interfaces/lib/python3.12/site-packages:/home/thamil/nidar_m1/base_ws/install/mission_manager/lib/python3.12/site-packages:/home/thamil/nidar_m1/delivery_ws/install/px4_ros_com/lib/python3.12/site-packages:/home/thamil/nidar_m1/delivery_ws/install/px4_msgs/lib/python3.12/site-packages:/home/thamil/nidar_m1/delivery_ws/install/delivery_node/lib/python3.12/site-packages:/home/thamil/nidar_m1/delivery_ws/install/delivery_interface/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/thamil/nidar_m1/base_ws/build/mission_manager/build --no-deps symlink_data
+[1.304s] running develop
+[1.616s] running egg_info
+[1.616s] creating mission_manager.egg-info
+[1.649s] writing mission_manager.egg-info/PKG-INFO
+[1.649s] writing dependency_links to mission_manager.egg-info/dependency_links.txt
+[1.649s] writing entry points to mission_manager.egg-info/entry_points.txt
+[1.650s] writing requirements to mission_manager.egg-info/requires.txt
+[1.650s] writing top-level names to mission_manager.egg-info/top_level.txt
+[1.650s] writing manifest file 'mission_manager.egg-info/SOURCES.txt'
+[1.704s] reading manifest file 'mission_manager.egg-info/SOURCES.txt'
+[1.705s] writing manifest file 'mission_manager.egg-info/SOURCES.txt'
+[1.732s] running build_ext
+[1.733s] Creating /home/thamil/nidar_m1/base_ws/install/mission_manager/lib/python3.12/site-packages/mission-manager.egg-link (link to .)
+[1.734s] Installing lawnmower_planner script to /home/thamil/nidar_m1/base_ws/install/mission_manager/lib/mission_manager
+[1.734s] 
+[1.734s] Installed /home/thamil/nidar_m1/base_ws/build/mission_manager
+[1.735s] running symlink_data
+[1.735s] creating /home/thamil/nidar_m1/base_ws/install/mission_manager/share/ament_index
+[1.735s] creating /home/thamil/nidar_m1/base_ws/install/mission_manager/share/ament_index/resource_index
+[1.735s] creating /home/thamil/nidar_m1/base_ws/install/mission_manager/share/ament_index/resource_index/packages
+[1.735s] symbolically linking /home/thamil/nidar_m1/base_ws/build/mission_manager/resource/mission_manager -> /home/thamil/nidar_m1/base_ws/install/mission_manager/share/ament_index/resource_index/packages
+[1.735s] symbolically linking /home/thamil/nidar_m1/base_ws/build/mission_manager/package.xml -> /home/thamil/nidar_m1/base_ws/install/mission_manager/share/mission_manager
+[1.794s] Invoked command in '/home/thamil/nidar_m1/base_ws/build/mission_manager' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/thamil/nidar_m1/base_ws/build/mission_manager/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/thamil/nidar_m1/base_ws/install/mission_manager/lib/python3.12/site-packages:/home/thamil/nidar_m1/base_ws/install/mission_interfaces/lib/python3.12/site-packages:/home/thamil/nidar_m1/base_ws/install/mission_manager/lib/python3.12/site-packages:/home/thamil/nidar_m1/delivery_ws/install/px4_ros_com/lib/python3.12/site-packages:/home/thamil/nidar_m1/delivery_ws/install/px4_msgs/lib/python3.12/site-packages:/home/thamil/nidar_m1/delivery_ws/install/delivery_node/lib/python3.12/site-packages:/home/thamil/nidar_m1/delivery_ws/install/delivery_interface/lib/python3.12/site-packages:/opt/ros/jazzy/lib/python3.12/site-packages /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/thamil/nidar_m1/base_ws/build/mission_manager/build --no-deps symlink_data
