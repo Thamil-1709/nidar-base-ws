@@ -1,1 +1,0 @@
-/home/thamil/nidar_m1/base_ws/src/mission_manager/setup.py

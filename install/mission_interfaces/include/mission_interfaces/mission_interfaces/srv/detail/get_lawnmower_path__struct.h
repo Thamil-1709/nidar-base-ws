@@ -1,1 +1,0 @@
-/home/thamil/nidar_m1/base_ws/build/mission_interfaces/rosidl_generator_c/mission_interfaces/srv/detail/get_lawnmower_path__struct.h
