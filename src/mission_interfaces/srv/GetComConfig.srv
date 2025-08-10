@@ -1,0 +1,11 @@
+
+---
+string ros_ip
+string ros_port
+string scout_video_port
+string scout_video_ip
+string delivery_video_port
+string delivery_video_ip
+string message
+bool success
+

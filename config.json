@@ -1,0 +1,28 @@
+{
+    "_default": {
+        "11": {
+            "drone_config": {
+                "delivery_topic": "/delivery/drone1/status",
+                "scout_topic": "/scout/drone/status"
+            },
+            "key": "drone_config"
+        },
+        "12": {
+            "communication_config": {
+                "ros_ip": "192.168.1.10",
+                "ros_port": "11311",
+                "scout_video_port": "8081",
+                "scout_video_ip": "192.168.1.20",
+                "delivery_video_port": "8082",
+                "delivery_video_ip": "192.168.1.30"
+            },
+            "key": "communication_config"
+        },
+        "13": {
+            "flight_timeout": {
+                "timeout": 3
+            },
+            "key": "flight_timeout"
+        }
+    }
+}

@@ -1,0 +1,4 @@
+---
+int32 timeout
+string message
+bool success

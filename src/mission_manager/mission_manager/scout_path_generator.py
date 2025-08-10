@@ -1,83 +1,95 @@
+# !../../../.venv/bin/python3
 import rclpy
 from rclpy.node import Node
+from mission_interfaces.srv import GetLawnmowerPath
+from pyproj import Transformer
 import math
 
-from mission_interfaces.srv import GetLawnmowerPath
-
-class LawnMowerPathGenerator(Node):
-
+class LawnmowerPathServer(Node):
     def __init__(self):
         super().__init__('lawnmower_path_server')
         self.srv = self.create_service(
-            GetLawnmowerPath,
-            '/get_lawnmower_path',
-            self.generate_path_callback
-        )
-        self.get_logger().info('Lawnmower Path Service is ready...')
+            GetLawnmowerPath, 'get_scout_path', self.lawnmower_callback)
+        self.get_logger().info('Lawnmower path service is ready.')
 
-    def generate_path_callback(self, request, response):
-        x_coords = list(request.polygon_x)
-        y_coords = list(request.polygon_y)
-        spacing = request.spacing
+        # EPSG:4326 (lat/lon) -> EPSG:32644 (UTM Zone 44N)
+        self.transformer = Transformer.from_crs("EPSG:4326", "EPSG:32644", always_xy=True)
+        self.reverse_transformer = Transformer.from_crs("EPSG:32644","EPSG:4326",always_xy=(True))
+
+    def lawnmower_callback(self, request, response):
+        # Convert lat/lon to UTM x/y
+        lat_lon_coords = list(zip(request.polygon_x, request.polygon_y))  # Note: polygon_x = lon, polygon_y = lat
+        transformed_coords = [self.transformer.transform(lon, lat) for lon, lat in lat_lon_coords]
+        polygon_x = [round(x, 1) for x, _ in transformed_coords]
+        polygon_y = [round(y, 1) for _, y in transformed_coords]
+
         safe_margin = request.safe_margin
-        angle = math.radians(request.angle)
+        spacing = request.spacing
+        angle_deg = request.angle
 
-        if len(x_coords) < 3 or len(x_coords) != len(y_coords):
-            self.get_logger().error('Invalid polygon input.')
-            return response
+        self.get_logger().info(
+            f'Received {len(polygon_x)} points. Margin: {safe_margin}, Spacing: {spacing}, Angle: {angle_deg} deg'
+        )
 
-        # Step 1: Rotate polygon to simplify path generation
-        rotated_coords = [self.rotate(x, y, angle) for x, y in zip(x_coords, y_coords)]
-        min_x = min([p[0] for p in rotated_coords])
-        max_x = max([p[0] for p in rotated_coords])
+        # Convert angle to radians
+        angle_rad = math.radians(angle_deg)
 
-        # Step 2: Generate lines in rotated space
-        lines = []
-        x = min_x + safe_margin
-        while x <= max_x - safe_margin:
-            lines.append(x)
-            x += spacing
+        # --- Rotate polygon ---
+        cos_theta = math.cos(-angle_rad)
+        sin_theta = math.sin(-angle_rad)
 
-        # Step 3: Get intersection points for each line
-        waypoints = []
-        for i, x_line in enumerate(lines):
-            intersections = []
-            for j in range(len(rotated_coords)):
-                x1, y1 = rotated_coords[j]
-                x2, y2 = rotated_coords[(j + 1) % len(rotated_coords)]
-                if (x1 - x_line) * (x2 - x_line) < 0:
-                    t = (x_line - x1) / (x2 - x1)
-                    y_intersect = y1 + t * (y2 - y1)
-                    intersections.append((x_line, y_intersect))
-            intersections.sort(key=lambda p: p[1])
-            for k in range(0, len(intersections), 2):
-                if k + 1 < len(intersections):
-                    p1 = intersections[k]
-                    p2 = intersections[k + 1]
-                    segment = [p1, p2] if i % 2 == 0 else [p2, p1]
-                    waypoints.extend(segment)
+        rotated_polygon = []
+        for x, y in zip(polygon_x, polygon_y):
+            x_rot = cos_theta * x - sin_theta * y
+            y_rot = sin_theta * x + cos_theta * y
+            rotated_polygon.append((x_rot, y_rot))
 
-        # Step 4: Rotate waypoints back
-        rotated_back = [self.rotate(x, y, -angle) for x, y in waypoints]
-        response.waypoint_x = [float(x) for x, y in rotated_back]
-        response.waypoint_y = [float(y) for x, y in rotated_back]
+        x_coords = [p[0] for p in rotated_polygon]
+        y_coords = [p[1] for p in rotated_polygon]
+
+        min_y = min(y_coords) + safe_margin
+        max_y = max(y_coords) - safe_margin
+        min_x = min(x_coords) + safe_margin
+        max_x = max(x_coords) - safe_margin
+
+        # --- Generate lawnmower path ---
+        waypoints_rotated = []
+        y = min_y
+        direction = 1
+        
+        
+
+        while y <= max_y:
+            if direction == 1:
+                waypoints_rotated.append((min_x, y))
+                waypoints_rotated.append((max_x, y))
+            else:
+                waypoints_rotated.append((max_x, y))
+                waypoints_rotated.append((min_x, y))
+            y += spacing
+            direction *= -1
+        waypoints_rotated = [self.reverse_transformer.transform(lon, lat) for lon, lat in waypoints_rotated]
+        # --- Add start and end points ---
+        
+        # --- Rotate waypoints back to original frame ---
+        cos_theta = math.cos(angle_rad)
+        sin_theta = math.sin(angle_rad)
+        for x_r, y_r in waypoints_rotated:
+            x_orig = cos_theta * x_r - sin_theta * y_r
+            y_orig = sin_theta * x_r + cos_theta * y_r
+
+            response.waypoint_x.append(x_orig)
+            response.waypoint_y.append(y_orig)
+        self.get_logger().info(f"Generated {len(response.waypoint_x)} waypoints.")
+        
+        
         return response
-
-    def rotate(self, x, y, angle):
-        cos_a = math.cos(angle)
-        sin_a = math.sin(angle)
-        x_rot = x * cos_a - y * sin_a
-        y_rot = x * sin_a + y * cos_a
-        return (x_rot, y_rot)
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = LawnMowerPathGenerator()
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
+    node = LawnmowerPathServer()
+    rclpy.spin(node)
     rclpy.shutdown()
 
 
