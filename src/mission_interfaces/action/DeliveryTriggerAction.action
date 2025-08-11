@@ -1,0 +1,9 @@
+float64 latitude
+float64 longitude
+float64 altitude
+---
+float64 current_lat
+float64 current_lon
+float64 current_alt
+---
+float64 success

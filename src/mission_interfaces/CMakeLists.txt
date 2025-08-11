@@ -17,6 +17,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetDroneConfig.srv"
   "srv/SetFlightTimeout.srv"
   "srv/GetFlightTimeout.srv"
+  "action/DeliveryTriggerAction.action"
 )
 
 if(BUILD_TESTING)
