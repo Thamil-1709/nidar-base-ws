@@ -23,6 +23,8 @@ setup(
             'lawnmower_planner = mission_manager.scout_path_generator:main',
             'data_config_services = mission_manager.DataConfigServices:main',
             'scout_path_generator = mission_manager.scout_path_generator:main',
+            'delivery_mission_manager = mission_manager.DeliveryMissionManager:main',
+            'scout_mission_manager = mission_manager.ScoutMissionManager:main',
         ],
     },
 )

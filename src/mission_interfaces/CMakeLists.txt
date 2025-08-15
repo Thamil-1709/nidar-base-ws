@@ -8,6 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(geographic_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetLawnmowerPath.srv"
@@ -17,7 +18,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetDroneConfig.srv"
   "srv/SetFlightTimeout.srv"
   "srv/GetFlightTimeout.srv"
-  "action/DeliveryTriggerAction.action"
+  "action/DeliveryActionTrigger.action"
+  "action/ScoutActionTrigger.action"
+  DEPENDENCIES geographic_msgs  
 )
 
 if(BUILD_TESTING)

@@ -1,7 +1,8 @@
 import rclpy
 from rclpy.node import Node
-from rclpy.actions import ActionServer
-from mission_manager_interfaces.action import DeliveryTriggerAction
+from rclpy.action import ActionServer
+from mission_interfaces.action import DeliveryActionTrigger
+
 
 class DeliveryMissionManager(Node):
     def __init__(self):
@@ -11,11 +12,12 @@ class DeliveryMissionManager(Node):
         self.current_mission = None
         self.action_server = ActionServer(
             self,
+            DeliveryActionTrigger,
             'delivery_manager',
             self.handle_delivery_mission,
             goal_callback=self.goal_callback,
             cancel_callback=self.cancel_callback,
-            qos_profile=rclpy.qos.QoSProfile(depth=10)
+            
         )
         self.get_logger().info('Action server for delivery mission is ready.')
 
@@ -30,8 +32,6 @@ class DeliveryMissionManager(Node):
 
     def handle_delivery_mission(self, goal_handle):
         self.get_logger().info('Handling delivery mission...')
-        
-        
         goal_handle.succeed()
         self.get_logger().info('Delivery mission completed successfully.')
     

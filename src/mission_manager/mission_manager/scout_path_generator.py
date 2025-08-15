@@ -82,7 +82,6 @@ class LawnmowerPathServer(Node):
             response.waypoint_y.append(y_orig)
         self.get_logger().info(f"Generated {len(response.waypoint_x)} waypoints.")
         
-        
         return response
 
 
