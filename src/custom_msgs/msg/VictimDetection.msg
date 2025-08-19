@@ -1,0 +1,6 @@
+sensor_msgs/Image cropped_image
+float64 latitude
+float64 longitude
+float32 confidence
+string detection_id
+sensor_msgs/RegionOfInterest bounding_box
