@@ -1,5 +1,5 @@
-geographic_msgs/GeoPoint[] waypoints
+geographic_msgs/GeoPoint[] waypoints #request 
 ---
-string success 
+bool success 
 ---
 geographic_msgs/GeoPoint current_location

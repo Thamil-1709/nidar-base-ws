@@ -1,9 +1,6 @@
-float64 latitude
-float64 longitude
-float64 altitude
+geographic_msgs/GeoPoint goal  #request 
+
 ---
-float64 success
+bool success
 ---
-float64 current_lat
-float64 current_lon
-float64 current_alt
+geographic_msgs/GeoPoint current_location

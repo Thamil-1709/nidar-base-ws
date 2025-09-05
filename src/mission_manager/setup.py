@@ -17,7 +17,9 @@ setup(
     maintainer_email='tamilselvan1709@gmail.com',
     description='TODO: Package description',
     license='TODO: License declaration',
-    tests_require=['pytest'],
+    extras_require={
+        'test': ['pytest'],
+    },
     entry_points={
         'console_scripts': [
             'lawnmower_planner = mission_manager.scout_path_generator:main',

@@ -17,7 +17,6 @@ class DeliveryMissionManager(Node):
             self.handle_delivery_mission,
             goal_callback=self.goal_callback,
             cancel_callback=self.cancel_callback,
-            
         )
         self.get_logger().info('Action server for delivery mission is ready.')
 
@@ -34,6 +33,13 @@ class DeliveryMissionManager(Node):
         self.get_logger().info('Handling delivery mission...')
         goal_handle.succeed()
         self.get_logger().info('Delivery mission completed successfully.')
+        #feedback of goal 
+
+        # result of goal 
+        result = DeliveryActionTrigger.Result()
+        print("Returning result")
+        result.success = 1.0
+        return result
     
     
 
