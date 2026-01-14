@@ -18,9 +18,12 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetDroneConfig.srv"
   "srv/SetFlightTimeout.srv"
   "srv/GetFlightTimeout.srv"
+  "srv/GetMissionBoundary.srv"
+  "srv/SetMissionBoundary.srv"
   "action/DeliveryActionTrigger.action"
   "action/ScoutActionTrigger.action"
   DEPENDENCIES geographic_msgs  
+  
 )
 
 if(BUILD_TESTING)

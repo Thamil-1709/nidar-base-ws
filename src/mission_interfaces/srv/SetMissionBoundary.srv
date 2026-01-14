@@ -1,0 +1,4 @@
+geographic_msgs/GeoPoint[] boundary_points
+---
+bool success
+string message

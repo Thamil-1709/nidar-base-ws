@@ -3,8 +3,10 @@ import rclpy
 from rclpy.node import Node
 from rosidl_runtime_py import message_to_ordereddict
 from tinydb import TinyDB, Query
-from mission_interfaces.srv import GetComConfig, SetComConfig, GetDroneConfig, SetDroneConfig,SetFlightTimeout, GetFlightTimeout
+from mission_interfaces.srv import GetComConfig, SetComConfig, GetDroneConfig, SetDroneConfig,SetFlightTimeout, GetFlightTimeout, GetMissionBoundary
 import os
+from geographic_msgs.msg import GeoPoint
+from mission_interfaces.srv import GetMissionBoundary, SetMissionBoundary
 
 class StoreConfig(Node):
     def __init__(self):
@@ -35,6 +37,16 @@ class StoreConfig(Node):
         self.create_service(
             SetFlightTimeout, 'set_flight_timeout', self.set_flight_timeout_callback
         )
+        self.create_service(
+            GetMissionBoundary,
+            'get_mission_boundary',
+            self.get_mission_boundary_callback
+        )
+        self.create_service(
+            SetMissionBoundary,
+            'set_mission_boundary',
+            self.set_mission_boundary_callback
+        )
         
         self.get_logger().info('Service for storing and retrieving mission data is ready.')
             
@@ -50,6 +62,25 @@ class StoreConfig(Node):
         self.get_logger().info(f'Stored {key} with value {value} in {self.config_file}')
 
         return True
+
+    def _serialize_boundary_points(self, points):
+        return [
+        {
+            'latitude': p.latitude,
+            'longitude': p.longitude,
+            'altitude': p.altitude
+        } for p in points
+    ]
+
+    def _deserialize_boundary_points(self, data):
+        return [
+        GeoPoint(
+            latitude=p['latitude'],
+            longitude=p['longitude'],
+            altitude=p.get('altitude', 0.0)
+        ) for p in data
+    ]
+
 
     def retrieve_config(self, key):
         Config = Query()
@@ -138,7 +169,7 @@ class StoreConfig(Node):
             self.store_config("drone_config", temp)
             response.success = True
             response.message = 'Successfully set drone configuration'
-        else:
+        else:   
             response.success = False
             response.message = 'Invalid drone configuration data'
             self.get_logger().warning(response.message)
@@ -173,6 +204,66 @@ class StoreConfig(Node):
             response.message = 'Invalid flight timeout value'
             self.get_logger().warning(response.message)
         return response
+
+    '''def get_current_mission_config(self,request, response):
+        self.get_logger().info('Retrieving current mission configuration')
+        value = self.retrieve_config("boundary")
+        if value is not None:
+            response.kml_data = value.get('kml_data', '')
+            response.success = True
+            response.message = 'Successfully retrieved current mission configuration'
+        else:
+            response.kml_data = ''
+            response.success = False
+            response.message = 'Failed to retrieve current mission configuration'
+            self.get_logger().warning(response.message)
+        return response
+
+    def set_current_mission_config(self, request, response):
+        self.get_logger().info('Setting current mission configuration')
+        temp = {
+            'kml_data': request.kml_data
+        }
+        self.store_config("boundary", temp)
+        self.get_logger().info('Successfully set current mission configuration')
+        return True'''
+    
+    def set_mission_boundary_callback(self, request, response):
+        self.get_logger().info('Setting mission boundary points')
+
+        if not request.boundary_points:
+            response.success = False
+            response.message = 'Boundary points list is empty'
+            self.get_logger().warning(response.message)
+            return response
+
+        serialized = self._serialize_boundary_points(request.boundary_points)
+        self.store_config("mission_boundary_points", serialized)
+
+        response.success = True
+        response.message = 'Mission boundary stored successfully'
+        self.get_logger().info(response.message)
+
+        return response
+    def get_mission_boundary_callback(self, request, response):
+        self.get_logger().info('Retrieving mission boundary points')
+
+        serialized = self.retrieve_config("mission_boundary_points")
+        if serialized is None:
+            response.success = False
+            response.message = 'No mission boundary points found'
+            self.get_logger().warning(response.message)
+            return response
+
+        deserialized = self._deserialize_boundary_points(serialized)
+        response.boundary_points.extend(deserialized)
+
+        response.success = True
+        #response.message = 'Mission boundary points retrieved successfully'
+        self.get_logger().info(str(response.success))
+
+        return response
+
 
 
 def main(args=None):
