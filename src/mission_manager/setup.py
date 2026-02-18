@@ -10,6 +10,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/kml', ['kml/area.kml']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -25,6 +26,8 @@ setup(
             'scout_path_generator = mission_manager.scout_path_generator:main',
             'delivery_mission_manager = mission_manager.DeliveryMissionManager:main',
             'scout_mission_manager = mission_manager.ScoutMissionManager:main',
+            'telemetery_node = mission_manager.Telemetery:main',
+            'model_service = mission_manager.random_location_service:main',
         ],
     },
 )
