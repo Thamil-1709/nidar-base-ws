@@ -11,6 +11,8 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/kml', ['kml/area.kml']),
+         ('share/' + package_name + '/launch' ,['launch/mission_launch.py'] ),
+        
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -18,7 +20,7 @@ setup(
     maintainer_email='tamilselvan1709@gmail.com',
     description='TODO: Package description',
     license='TODO: License declaration',
-    tests_require=['pytest'],
+   # tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'lawnmower_planner = mission_manager.scout_path_generator:main',
@@ -28,6 +30,9 @@ setup(
             'scout_mission_manager = mission_manager.ScoutMissionManager:main',
             'telemetery_node = mission_manager.Telemetery:main',
             'model_service = mission_manager.random_location_service:main',
+            'mission_manager = mission_manager.MissionManager:main',
+             'multi_delivery_manager = mission_manager.MultiDeliveryManager:main',
+             'MissionManagerSequence = mission_manager.MissionManagerSequence:main',
         ],
     },
 )
