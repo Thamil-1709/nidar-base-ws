@@ -1,1 +1,83 @@
-{"_default": {"11": {"drone_config": {"delivery_topic": "/delivery/drone1/status", "scout_topic": "/scout/drone/status"}, "key": "drone_config"}, "12": {"communication_config": {"ros_ip": "192.168.1.10", "ros_port": "11311", "scout_video_port": "8081", "scout_video_ip": "192.168.1.20", "delivery_video_port": "8082", "delivery_video_ip": "192.168.1.30"}, "key": "communication_config"}, "13": {"flight_timeout": {"timeout": 3}, "key": "flight_timeout"}}}
+{
+    "_default": {
+        "11": {
+            "drone_config": {
+                "delivery_topic": "/delivery/drone1/status",
+                "scout_topic": "/scout/drone/status"
+            },
+            "key": "drone_config"
+        },
+        "12": {
+            "communication_config": {
+                "ros_ip": "192.168.1.10",
+                "ros_port": "11311",
+                "scout_video_port": "8081",
+                "scout_video_ip": "192.168.1.20",
+                "delivery_video_port": "8082",
+                "delivery_video_ip": "192.168.1.30"
+            },
+            "key": "communication_config"
+        },
+        "13": {
+            "flight_timeout": {
+                "timeout": 3
+            },
+            "key": "flight_timeout"
+        },
+        "14": {
+            "mission_boundary_points": [
+                {
+                    "latitude": 28.41589948171861,
+                    "longitude": 77.5248680736644,
+                    "altitude": 0.0
+                },
+                {
+                    "latitude": 28.41577368181867,
+                    "longitude": 77.52513646935643,
+                    "altitude": 0.0
+                },
+                {
+                    "latitude": 28.41592658800987,
+                    "longitude": 77.52526081112921,
+                    "altitude": 0.0
+                },
+                {
+                    "latitude": 28.41573338487941,
+                    "longitude": 77.52532586284515,
+                    "altitude": 0.0
+                },
+                {
+                    "latitude": 28.41579093344923,
+                    "longitude": 77.52552994888157,
+                    "altitude": 0.0
+                },
+                {
+                    "latitude": 28.41594750872414,
+                    "longitude": 77.52549414337305,
+                    "altitude": 0.0
+                },
+                {
+                    "latitude": 28.41604248043307,
+                    "longitude": 77.52565321371007,
+                    "altitude": 0.0
+                },
+                {
+                    "latitude": 28.41628150879664,
+                    "longitude": 77.52558767997395,
+                    "altitude": 0.0
+                },
+                {
+                    "latitude": 28.41631506933865,
+                    "longitude": 77.52527755755747,
+                    "altitude": 0.0
+                },
+                {
+                    "latitude": 28.41619785994057,
+                    "longitude": 77.52497810744738,
+                    "altitude": 0.0
+                }
+            ],
+            "key": "mission_boundary_points"
+        }
+    }
+}

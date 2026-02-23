@@ -18,7 +18,7 @@ setup(
     maintainer_email='tamilselvan1709@gmail.com',
     description='TODO: Package description',
     license='TODO: License declaration',
-    tests_require=['pytest'],
+   # tests_require=['pytest'],
     entry_points={
         'console_scripts': [
          "model_inference_node = model_inference.model_inference_node:main",

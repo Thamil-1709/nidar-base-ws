@@ -1,0 +1,14 @@
+# ConfirmPayloadLoaded.srv
+# Gate 1 — operator confirms payloads are physically loaded onto the drone
+# before it is allowed to take off.
+#
+# Example call:
+#   ros2 service call /delivery/confirm_payload_loaded \
+#     mission_interfaces/srv/ConfirmPayloadLoaded \
+#     "{batch_size: 3, confirmed: true}"
+
+uint8  batch_size   # number of payloads that need to be loaded (informational)
+bool   confirmed    # set True when all payloads are on board
+---
+bool   confirmed    # echoes back whether the gate was unlocked
+string message      # human-readable status

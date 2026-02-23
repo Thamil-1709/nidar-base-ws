@@ -3,211 +3,201 @@
 import rclpy
 import asyncio
 import threading
+import time
+import math
+
 from rclpy.node import Node
 from rclpy.action import ActionServer, GoalResponse, CancelResponse
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.callback_groups import ReentrantCallbackGroup
 
-from mission_interfaces.action import ScoutActionTrigger
+from std_msgs.msg import Float32, String
+from geometry_msgs.msg import Polygon as RosPolygon, Point32, Vector3
 from geographic_msgs.msg import GeoPoint
+
+from mission_interfaces.srv import GetMissionBoundary
+from mission_interfaces.action import ScoutActionTrigger
 
 from mavsdk import System
 from mavsdk.mission import MissionItem, MissionPlan
-from mavsdk.geofence import Point, Polygon, FenceType, GeofenceData, Circle
+from mavsdk.geofence import Point, Polygon as MavsdkPolygon, FenceType, GeofenceData
+
+
+# ================= SAFETY CONSTANTS =================
+BATTERY_RTL_THRESHOLD = 0.30
+MAX_MISSION_TIME_SEC = 900
 
 
 class ScoutMissionManager(Node):
 
     def __init__(self):
         super().__init__('scout_mission_manager')
-        self.get_logger().info("Scout Mission Manager started")
+        self.get_logger().info("Scout Mission Manager started (SAFE MODE)")
 
-        # ---------------- STATE ----------------
+        self.cb_group = ReentrantCallbackGroup()
+
+        # -------- STATE --------
         self._active_goal = None
         self._cancel_requested = False
-        self._mavsdk_ready = threading.Event()
+        self.battery = 1.0
+        self.mission_start_time = None
 
-        # ---------------- MAVSDK EVENT LOOP ----------------
-        self.mavsdk_loop = asyncio.new_event_loop()
-        self.mavsdk_thread = threading.Thread(
-            target=self._run_mavsdk_loop,
-            daemon=True
+        # -------- TELEMETRY PUBLISHERS --------
+        self.state_pub = self.create_publisher(String, '/scout_drone/state', 10)
+        self.battery_pub = self.create_publisher(Float32, '/scout_drone/battery', 10)
+        self.alt_pub = self.create_publisher(Float32, '/scout_drone/altitude', 10)
+        self.att_pub = self.create_publisher(Vector3, '/scout_drone/attitude', 10)
+
+        self._publish_state("Standby")
+
+        # -------- SERVICE CLIENT --------
+        self.boundary_client = self.create_client(
+            GetMissionBoundary,
+            'get_mission_boundary',
+            callback_group=self.cb_group
         )
-        self.mavsdk_thread.start()
+
+        # -------- GEOFENCE VIS --------
+        self.fence_pub = self.create_publisher(RosPolygon, 'mission_geofence', 10)
+
+        # -------- MAVSDK --------
+        self.loop = asyncio.new_event_loop()
+        threading.Thread(target=self._run_loop, daemon=True).start()
 
         self.drone = System()
+        asyncio.run_coroutine_threadsafe(self._connect(), self.loop)
 
-        # Start connection safely
-        asyncio.run_coroutine_threadsafe(
-            self._connect_and_wait_for_telemetry(),
-            self.mavsdk_loop
-        )
-
-        # ---------------- ACTION SERVER ----------------
+        # -------- ACTION SERVER --------
         self.action_server = ActionServer(
             self,
             ScoutActionTrigger,
             'start_scan',
             execute_callback=self.execute_callback,
             goal_callback=self.goal_callback,
-            cancel_callback=self.cancel_callback
+            cancel_callback=self.cancel_callback,
+            callback_group=self.cb_group
         )
 
     # =====================================================
-    # MAVSDK LOOP
-    # =====================================================
+    def _run_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
 
-    def _run_mavsdk_loop(self):
-        asyncio.set_event_loop(self.mavsdk_loop)
-        self.mavsdk_loop.run_forever()
+    async def _connect(self):
+        await self.drone.connect(system_address="udp://:14540")
 
-    async def _connect_and_wait_for_telemetry(self):
-        self.get_logger().info("Connecting to MAVSDK...")
-        await self.drone.connect(system_address="serial:///dev/ttyAMA10:921600")
-
-        async for state in self.drone.core.connection_state():
-            if state.is_connected:
-                self.get_logger().info("MAVSDK core connected")
+        async for health in self.drone.telemetry.health():
+            if health.is_global_position_ok and health.is_armable:
                 break
 
-        # 🔴 CRITICAL: wait until telemetry plugin is usable
-        async for _ in self.drone.telemetry.health():
-            self.get_logger().info("Telemetry plugin initialized")
-            self._mavsdk_ready.set()
-            return
+        asyncio.create_task(self._telemetry_monitor())
+        self.get_logger().info("Scout drone connected")
+
+    async def _telemetry_monitor(self):
+        asyncio.create_task(self._battery_stream())
+        asyncio.create_task(self._altitude_stream())
+        asyncio.create_task(self._attitude_stream())
+
+    async def _battery_stream(self):
+        async for b in self.drone.telemetry.battery():
+            self.battery = b.remaining_percent
+            self.battery_pub.publish(Float32(data=b.remaining_percent * 100))
+
+    async def _altitude_stream(self):
+        async for pos in self.drone.telemetry.position():
+            self.alt_pub.publish(Float32(data=pos.relative_altitude_m))
+
+    async def _attitude_stream(self):
+      async for att in self.drone.telemetry.attitude_euler():
+        self.att_pub.publish(Vector3(
+            x=att.roll_deg,
+            y=att.pitch_deg,
+            z=att.yaw_deg
+         ))
 
     # =====================================================
-    # ACTION CALLBACKS
-    # =====================================================
-
-    def goal_callback(self, goal_request):
-        if not goal_request.waypoints:
-            self.get_logger().error("Rejected goal: empty waypoint list")
-            return GoalResponse.REJECT
-
-        if self._active_goal is not None:
-            self.get_logger().warn("Rejected goal: mission already running")
-            return GoalResponse.REJECT
-
-        return GoalResponse.ACCEPT
-
-    def cancel_callback(self, goal_handle):
-        self.get_logger().warn("Cancel requested")
-        self._cancel_requested = True
-        return CancelResponse.ACCEPT
-
     def execute_callback(self, goal_handle):
-        # ---------- BLOCK UNTIL MAVSDK IS READY ----------
-        if not self._mavsdk_ready.wait(timeout=15):
-            result = ScoutActionTrigger.Result()
-            result.success = "Mission failed: MAVSDK not ready"
-            goal_handle.abort()
-            return result
-
-        self.get_logger().info("Scout mission execution started")
         self._active_goal = goal_handle
         self._cancel_requested = False
-
         result = ScoutActionTrigger.Result()
 
+        future = asyncio.run_coroutine_threadsafe(
+            self._execute_async(goal_handle),
+            self.loop
+        )
+
         try:
-            # Get home position
-            home_lat, home_lon = asyncio.run_coroutine_threadsafe(
-                self._get_home(),
-                self.mavsdk_loop
-            ).result()
-
-            # Upload geofence
-            asyncio.run_coroutine_threadsafe(
-                self._upload_geofence(home_lat, home_lon),
-                self.mavsdk_loop
-            ).result()
-
-            # Upload mission
-            asyncio.run_coroutine_threadsafe(
-                self._upload_mission(goal_handle.request.waypoints),
-                self.mavsdk_loop
-            ).result()
-
-            # Arm & start mission
-            asyncio.run_coroutine_threadsafe(
-                self.drone.action.arm(),
-                self.mavsdk_loop
-            ).result()
-
-            asyncio.run_coroutine_threadsafe(
-                self.drone.mission.start_mission(),
-                self.mavsdk_loop
-            ).result()
-
-            # Start feedback stream
-            feedback_future = asyncio.run_coroutine_threadsafe(
-                self._publish_feedback(goal_handle),
-                self.mavsdk_loop
-            )
-
-            # Wait until landed
-            asyncio.run_coroutine_threadsafe(
-                self._wait_for_landing(),
-                self.mavsdk_loop
-            ).result()
-
-            feedback_future.cancel()
-
-            if self._cancel_requested:
-                goal_handle.canceled()
-                result.success = "Mission cancelled"
-            else:
-                goal_handle.succeed()
-                result.success = "Scout mission completed successfully"
-
+            future.result()
+            goal_handle.succeed()
+            result.success = "Mission completed and RTL successful"
         except Exception as e:
-            self.get_logger().error(f"Mission failed: {e}")
-            asyncio.run_coroutine_threadsafe(
-                self._abort(),
-                self.mavsdk_loop
-            )
+            self.get_logger().error(str(e))
             goal_handle.abort()
-            result.success = f"Mission failed: {str(e)}"
-
+            result.success = str(e)
         finally:
             self._active_goal = None
-            self._cancel_requested = False
 
         return result
 
+    async def _execute_async(self, goal_handle):
+
+        self._publish_state("Preparing mission")
+
+        boundary = await self._request_boundary_service()
+        await self._upload_geofence(boundary)
+        await self._upload_mission(goal_handle.request.waypoints)
+
+        await self.drone.action.arm()
+        await self.drone.mission.start_mission()
+
+        self.mission_start_time = time.time()
+        self._publish_state("Scanning")
+
+        await self._monitor_mission()
+
     # =====================================================
-    # MAVSDK HELPERS
-    # =====================================================
+    async def _request_boundary_service(self):
+        while not self.boundary_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Waiting for boundary service...")
 
-    async def _get_home(self):
-        async for home in self.drone.telemetry.home():
-            return home.latitude_deg, home.longitude_deg
+        resp = await self.boundary_client.call_async(
+            GetMissionBoundary.Request()
+        )
 
-    async def _upload_geofence(self, lat, lon):
-        d = 0.0002  # ~22 m
+        if not resp.success:
+            raise RuntimeError("Boundary service failed")
 
-        polygon = Polygon([
-            Point(lat - d, lon - d),
-            Point(lat + d, lon - d),
-            Point(lat + d, lon + d),
-            Point(lat - d, lon + d)
-        ], FenceType.INCLUSION)
+        return resp.boundary_points
 
-        dummy_circle = Circle(Point(0, 0), 0, FenceType.INCLUSION)
+    async def _upload_geofence(self, points):
 
+        mav_pts = [Point(p.latitude, p.longitude) for p in points]
+        mav_pts.append(mav_pts[0])
+
+        ros_poly = RosPolygon()
+        for p in points:
+            ros_poly.points.append(Point32(x=p.latitude, y=p.longitude))
+        ros_poly.points.append(ros_poly.points[0])
+        self.fence_pub.publish(ros_poly)
+
+        await self.drone.geofence.clear_geofence()
         await self.drone.geofence.upload_geofence(
-            GeofenceData([polygon], [dummy_circle])
+            GeofenceData(
+                polygons=[MavsdkPolygon(mav_pts, FenceType.INCLUSION)],
+                circles=[]
+            )
         )
 
     async def _upload_mission(self, waypoints):
-        mission_items = []
 
+        items = []
         for wp in waypoints:
-            mission_items.append(
+            items.append(
                 MissionItem(
                     wp.latitude,
                     wp.longitude,
                     wp.altitude,
-                    10.0,
+                    3.0,
                     True,
                     float("nan"),
                     float("nan"),
@@ -217,41 +207,72 @@ class ScoutMissionManager(Node):
                 )
             )
 
-        await self.drone.mission.set_return_to_launch_after_mission(True)
-        await self.drone.mission.upload_mission(
-            MissionPlan(mission_items)
-        )
+        await self.drone.mission.upload_mission(MissionPlan(items))
 
-    async def _publish_feedback(self, goal_handle):
-        async for pos in self.drone.telemetry.position():
+    # =====================================================
+    async def _monitor_mission(self):
+
+        self.get_logger().info("Monitoring mission progress...")
+
+        async for progress in self.drone.mission.mission_progress():
+
             if self._cancel_requested:
-                return
+                await self.drone.action.return_to_launch()
+                raise RuntimeError("Mission cancelled")
 
-            feedback = ScoutActionTrigger.Feedback()
-            feedback.current_location = GeoPoint(
-                latitude=pos.latitude_deg,
-                longitude=pos.longitude_deg,
-                altitude=pos.absolute_altitude_m
+            if self.battery < BATTERY_RTL_THRESHOLD:
+                await self.drone.action.return_to_launch()
+                raise RuntimeError("Battery low – RTL triggered")
+
+            if time.time() - self.mission_start_time > MAX_MISSION_TIME_SEC:
+                await self.drone.action.return_to_launch()
+                raise RuntimeError("Mission timeout – RTL triggered")
+
+            self.get_logger().info(
+                f"Mission progress: {progress.current}/{progress.total}"
             )
-            goal_handle.publish_feedback(feedback)
 
-    async def _abort(self):
-        try:
-            await self.drone.action.hold()
-        except Exception:
-            pass
+            if progress.current == progress.total:
+                self.get_logger().info("All waypoints completed")
+                break
 
-    async def _wait_for_landing(self):
+        while not await self.drone.mission.is_mission_finished():
+            await asyncio.sleep(1)
+
+        self._publish_state("Returning to Launch")
+        await self.drone.action.return_to_launch()
+
         async for in_air in self.drone.telemetry.in_air():
             if not in_air:
-                return
+                break
+
+        self._publish_state("Mission Completed")
+
+    # =====================================================
+    def goal_callback(self, goal):
+        return GoalResponse.ACCEPT if self._active_goal is None else GoalResponse.REJECT
+
+    def cancel_callback(self, goal_handle):
+        self._cancel_requested = True
+        return CancelResponse.ACCEPT
+
+    def _publish_state(self, state):
+        self.state_pub.publish(String(data=state))
 
 
+# =========================================================
 def main(args=None):
     rclpy.init(args=args)
     node = ScoutMissionManager()
-    rclpy.spin(node)
-    rclpy.shutdown()
+    executor = MultiThreadedExecutor()
+
+    try:
+        rclpy.spin(node, executor)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':

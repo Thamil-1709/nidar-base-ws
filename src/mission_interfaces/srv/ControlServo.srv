@@ -1,0 +1,5 @@
+int8 servo_id        # 1–5
+bool open            # true=open, false=close
+---
+bool success
+string message

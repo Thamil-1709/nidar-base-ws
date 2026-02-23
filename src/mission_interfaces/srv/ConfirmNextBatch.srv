@@ -1,0 +1,21 @@
+# ConfirmNextBatch.srv
+# Gate 2 — operator confirms the drone is ready (batteries swapped, airframe
+# checked) to dispatch the next delivery batch after landing.
+#
+# Example — confirm ready:
+#   ros2 service call /delivery/confirm_next_batch \
+#     mission_interfaces/srv/ConfirmNextBatch \
+#     "{queued_victims: 4, next_batch_size: 4, confirmed: true, clear_queue: false}"
+#
+# Example — discard remaining victims:
+#   ros2 service call /delivery/confirm_next_batch \
+#     mission_interfaces/srv/ConfirmNextBatch \
+#     "{queued_victims: 4, next_batch_size: 4, confirmed: false, clear_queue: true}"
+
+uint8  queued_victims   # total victims still in queue (informational)
+uint8  next_batch_size  # how many will fly in next batch (informational)
+bool   confirmed        # set True to dispatch the next batch
+bool   clear_queue      # set True to discard all remaining queued victims
+---
+bool   confirmed        # echoes back whether the gate was unlocked
+string message          # human-readable status

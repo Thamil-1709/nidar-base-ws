@@ -1,0 +1,7 @@
+# Request
+
+
+---
+# Response
+bool success
+geographic_msgs/GeoPoint[] boundary_points
